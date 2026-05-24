@@ -182,12 +182,20 @@ Public API exported by `package:chirp_addons/chirp_addons.dart`:
 
 ## Examples
 
-Runnable examples live in [`example/`](example):
+A runnable Flutter demo app lives in [`example/`](example). It includes:
 
-- `basic_logging.dart`
-- `dio_interceptor_logging.dart`
-- `pretty_json_logging.dart`
-- `custom_configuration.dart`
+- basic structured logging
+- pretty JSON logging with caller info
+- Dio interceptor request and response logging
+- custom configuration with masked headers and auth-error logging
+
+Run it with:
+
+```bash
+cd example
+flutter pub get
+flutter run
+```
 
 ## Best Practices
 
