@@ -6,9 +6,18 @@ import 'package:chirp_addons/src/dio_chirp_config.dart';
 import 'package:chirp_addons/src/pretty_json_span.dart';
 import 'package:dio/dio.dart';
 
+/// A span formatter that teaches `chirp` how to render Dio objects.
+///
+/// This formatter recognizes [RequestOptions], [Response], and [DioException]
+/// records and emits structured, colorized output for each one. Any other log
+/// message falls back to chirp's [RainbowMessageFormatter].
 class DioChirpFormatter extends SpanBasedFormatter {
+  /// Creates a Dio-aware chirp formatter.
+  ///
+  /// Use [config] to control log sections, masking, compact mode, and colors.
   DioChirpFormatter({this.config = const DioChirpConfig()});
 
+  /// Formatting options applied to all Dio log events.
   final DioChirpConfig config;
 
   SpanSequence _logRequest(RequestOptions opt) {
@@ -30,7 +39,9 @@ class DioChirpFormatter extends SpanBasedFormatter {
           NewLine(),
           _sectionTitle('Headers'),
           NewLine(),
-          config.compact ? InlineData(opt.headers) : PrettyJsonSpan(_sanitizeHeaders(opt.headers), config: config),
+          config.compact
+              ? InlineData(opt.headers)
+              : PrettyJsonSpan(_sanitizeHeaders(opt.headers), config: config),
           NewLine(),
         ],
 
@@ -39,7 +50,9 @@ class DioChirpFormatter extends SpanBasedFormatter {
           NewLine(),
           _sectionTitle('Query'),
           NewLine(),
-          config.compact ? InlineData(opt.queryParameters) : PrettyJsonSpan(opt.queryParameters, config: config),
+          config.compact
+              ? InlineData(opt.queryParameters)
+              : PrettyJsonSpan(opt.queryParameters, config: config),
           NewLine(),
         ],
 
@@ -58,7 +71,8 @@ class DioChirpFormatter extends SpanBasedFormatter {
   SpanSequence _logResponse(Response res) {
     final uri = res.requestOptions.uri;
     final maskBody =
-        config.shouldMaskedRequestBody?.call(uri) ?? DioChirpConfig.defaultReqBodyMasker(uri, config.maskedRequestBody);
+        config.shouldMaskedRequestBody?.call(uri) ??
+        DioChirpConfig.defaultReqBodyMasker(uri, config.maskedRequestBody);
 
     final isError = (res.statusCode ?? 0) >= 400;
 
@@ -82,12 +96,17 @@ class DioChirpFormatter extends SpanBasedFormatter {
           NewLine(),
           config.compact || maskBody
               ? InlineData(res.headers.map)
-              : PrettyJsonSpan(_sanitizeHeaders(res.headers.map), config: config),
+              : PrettyJsonSpan(
+                  _sanitizeHeaders(res.headers.map),
+                  config: config,
+                ),
           NewLine(),
         ],
 
         /// DATA
-        if (config.logResponseBody && !_isNullOrEmpty(res.data) && !maskBody) ...[
+        if (config.logResponseBody &&
+            !_isNullOrEmpty(res.data) &&
+            !maskBody) ...[
           NewLine(),
           _sectionTitle('Data'),
           NewLine(),
@@ -110,23 +129,45 @@ class DioChirpFormatter extends SpanBasedFormatter {
 
         if (err.response case final Response r) ...[
           _row('Status', '${r.statusCode}'),
-          if (r.statusMessage != null) _row('Status Message', r.statusMessage ?? ''),
-          if (r.data != null) ...[NewLine(), _sectionTitle('Response Data'), NewLine(), _buildBody(r.data)],
+          if (r.statusMessage != null)
+            _row('Status Message', r.statusMessage ?? ''),
+          if (r.data != null) ...[
+            NewLine(),
+            _sectionTitle('Response Data'),
+            NewLine(),
+            _buildBody(r.data),
+          ],
         ],
 
-        if (err.error != null) ...[NewLine(), _sectionTitle('Error'), NewLine(), PlainText(err.error.toString())],
+        if (err.error != null) ...[
+          NewLine(),
+          _sectionTitle('Error'),
+          NewLine(),
+          PlainText(err.error.toString()),
+        ],
 
         if (!config.compact) ...[
           NewLine(),
           _sectionTitle('Stacktrace'),
           NewLine(),
-          AnsiStyled(foreground: Ansi16.brightBlack, child: StackTraceSpan(err.stackTrace)),
+          AnsiStyled(
+            foreground: Ansi16.brightBlack,
+            child: StackTraceSpan(err.stackTrace),
+          ),
         ],
         _line(config.errorColor, false),
       ],
     );
   }
 
+  /// Builds a formatted span for [record].
+  ///
+  /// Supported message payloads:
+  /// - [RequestOptions] for request logs
+  /// - [Response] for response logs
+  /// - [DioException] for error logs
+  ///
+  /// Returns [EmptySpan] when the corresponding log category is disabled.
   @override
   LogSpan buildSpan(LogRecord record) {
     final data = record.message;
@@ -156,7 +197,11 @@ class DioChirpFormatter extends SpanBasedFormatter {
   LogSpan _line(ConsoleColor color, bool isTop) {
     return AnsiStyled(
       foreground: color,
-      child: Surrounded(suffix: NewLine(), prefix: isTop ? null : NewLine(), child: PlainText('─' * 50)),
+      child: Surrounded(
+        suffix: NewLine(),
+        prefix: isTop ? null : NewLine(),
+        child: PlainText('─' * 50),
+      ),
     );
   }
 
@@ -168,7 +213,9 @@ class DioChirpFormatter extends SpanBasedFormatter {
   Map<String, dynamic> _sanitizeHeaders(Map<dynamic, dynamic> headers) {
     return headers.map((key, value) {
       final k = key.toString();
-      final shouldMask = config.shouldMaskedHeaders && config.maskedHeaders.contains(k.toLowerCase());
+      final shouldMask =
+          config.shouldMaskedHeaders &&
+          config.maskedHeaders.contains(k.toLowerCase());
       return MapEntry(k, shouldMask ? '******' : value);
     });
   }
@@ -193,7 +240,11 @@ class DioChirpFormatter extends SpanBasedFormatter {
   }
 
   LogSpan _sectionTitle(String text) {
-    return AnsiStyled(dim: true, foreground: config.labelColor, child: PlainText('$text:'));
+    return AnsiStyled(
+      dim: true,
+      foreground: config.labelColor,
+      child: PlainText('$text:'),
+    );
   }
 
   LogSpan _row(String label, String value) {
@@ -202,7 +253,11 @@ class DioChirpFormatter extends SpanBasedFormatter {
         Aligned(
           width: 12,
           align: HorizontalAlign.left,
-          child: AnsiStyled(foreground: config.labelColor, dim: true, child: PlainText('$label:')),
+          child: AnsiStyled(
+            foreground: config.labelColor,
+            dim: true,
+            child: PlainText('$label:'),
+          ),
         ),
         PlainText(value),
         NewLine(),

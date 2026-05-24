@@ -10,7 +10,15 @@ import 'package:chirp_addons/src/pretty_json_span.dart';
 ///Chirp.root = ChirpLogger()
 ///..addConsoleWriter(output: (x)=> print(x), formatter: ChirpPrettyJsonFormatter(getCallerInfo:kDebugMode));
 ///```
+///
+/// This formatter renders log records as readable multi-line output and uses
+/// [PrettyJsonSpan] to format nested payloads such as maps, lists, form data,
+/// and multipart files.
 class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
+  /// Creates a formatter for general structured logs.
+  ///
+  /// Set [getCallerInfo] to `true` only when file and line metadata should be
+  /// shown in output.
   ChirpPrettyJsonFormatter({required this.getCallerInfo});
 
   /// Whether this formatter needs caller info (file, line, class, method).
@@ -19,17 +27,31 @@ class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
   /// which is expensive. Only enable if the formatter displays source locations.
   final bool getCallerInfo;
 
+  /// Whether chirp must capture caller metadata for each log record.
+  ///
+  /// Returns `true` when source location output is enabled.
   @override
   bool get requiresCallerInfo {
     return getCallerInfo;
   }
 
+  /// Builds a span tree for [record].
+  ///
+  /// The output includes:
+  /// - timestamp
+  /// - optional caller location
+  /// - optional inferred class name
+  /// - level and message
+  /// - pretty-rendered record data
   @override
   LogSpan buildSpan(LogRecord record) {
     final callerInfo = record.callerInfo;
     final levelColor = _getLevelColor(record.level);
     final spans = [
-      AnsiStyled(foreground: Ansi16.brightBlack, child: BracketedTimestamp(record.timestamp)),
+      AnsiStyled(
+        foreground: Ansi16.brightBlack,
+        child: BracketedTimestamp(record.timestamp),
+      ),
       Whitespace(),
     ];
 
@@ -37,10 +59,15 @@ class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
     if (callerInfo != null) {
       final location = AnsiStyled(
         foreground: Ansi256.lightSkyBlue3_110,
-        child: DartSourceCodeLocation(fileName: callerInfo.callerFileName, line: callerInfo.line),
+        child: DartSourceCodeLocation(
+          fileName: callerInfo.callerFileName,
+          line: callerInfo.line,
+        ),
       );
 
-      spans.add(Surrounded(prefix: Whitespace(), suffix: Whitespace(), child: location));
+      spans.add(
+        Surrounded(prefix: Whitespace(), suffix: Whitespace(), child: location),
+      );
     }
 
     // Class Name
@@ -50,20 +77,40 @@ class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
         foreground: colorForHash(className.name, saturation: .low),
         child: className,
       );
-      spans.add(Surrounded(prefix: Whitespace(), suffix: Whitespace(), child: classNameSpan));
+      spans.add(
+        Surrounded(
+          prefix: Whitespace(),
+          suffix: Whitespace(),
+          child: classNameSpan,
+        ),
+      );
     }
 
     // Message
     spans.addAll([
       NewLine(),
-      AnsiStyled(bold: true, foreground: levelColor, child: BracketedLogLevel(record.level)),
+      AnsiStyled(
+        bold: true,
+        foreground: levelColor,
+        child: BracketedLogLevel(record.level),
+      ),
       Whitespace(),
-      AnsiStyled(foreground: levelColor, bold: true, child: LogMessage(record.message)),
+      AnsiStyled(
+        foreground: levelColor,
+        bold: true,
+        child: LogMessage(record.message),
+      ),
       NewLine(),
     ]);
 
     // Data
-    if (record.data.isNotEmpty) spans.addAll([dimmed(PlainText('Data:')), Whitespace(), PrettyJsonSpan(record.data)]);
+    if (record.data.isNotEmpty) {
+      spans.addAll([
+        dimmed(PlainText('Data:')),
+        Whitespace(),
+        PrettyJsonSpan(record.data),
+      ]);
+    }
 
     return SpanSequence(children: spans);
   }
