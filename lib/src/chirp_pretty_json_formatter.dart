@@ -4,6 +4,12 @@ import 'package:chirp/chirp.dart';
 import 'package:chirp/chirp_spans.dart';
 import 'package:chirp_addons/src/pretty_json_span.dart';
 
+///Add to the root logger to make it work anywhere
+///
+///```dart
+///Chirp.root = ChirpLogger()
+///..addConsoleWriter(output: (x)=> print(x), formatter: ChirpPrettyJsonFormatter(getCallerInfo:kDebugMode));
+///```
 class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
   ChirpPrettyJsonFormatter({required this.getCallerInfo});
 
