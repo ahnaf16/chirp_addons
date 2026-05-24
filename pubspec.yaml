@@ -2,6 +2,7 @@ name: chirp_addons
 description: "Dio logging and pretty JSON addons for the chirp logging package."
 version: 0.0.1
 homepage:
+repository: https://github.com/ahnaf16/chirp_addons
 
 environment:
   sdk: ^3.11.5
