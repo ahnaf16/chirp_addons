@@ -1,4 +1,12 @@
-# 0.0.1
+# Change Log
+
+## 0.0.2
+
+- Moved log level display next to the timestamp for better visual alignment in `ChirpPrettyJsonFormatter`.
+- Added formatting and rendering for error objects and stack traces for log records at `error` level or higher.
+- Cleaned up line formatting and code structure in `ChirpPrettyJsonFormatter`.
+
+## 0.0.1
 
 Initial release of `chirp_addons`.
 

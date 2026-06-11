@@ -53,6 +53,12 @@ class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
         child: BracketedTimestamp(record.timestamp),
       ),
       Whitespace(),
+      AnsiStyled(
+        bold: true,
+        foreground: levelColor,
+        child: BracketedLogLevel(record.level),
+      ),
+      Whitespace(),
     ];
 
     // File name
@@ -90,18 +96,33 @@ class ChirpPrettyJsonFormatter extends SpanBasedFormatter {
     spans.addAll([
       NewLine(),
       AnsiStyled(
-        bold: true,
-        foreground: levelColor,
-        child: BracketedLogLevel(record.level),
-      ),
-      Whitespace(),
-      AnsiStyled(
         foreground: levelColor,
         bold: true,
         child: LogMessage(record.message),
       ),
       NewLine(),
     ]);
+
+    final isError = record.level >= ChirpLogLevel.error;
+    if (isError)
+      spans.addAll([
+        if (record.error != null) ...[
+          dimmed(PlainText('Error:')),
+          Whitespace(),
+          AnsiStyled(
+            foreground: levelColor,
+            child: PlainText(record.error.toString()),
+          ),
+          NewLine(),
+        ],
+
+        if (record.stackTrace != null) ...[
+          dimmed(PlainText('StackTrace:')),
+          NewLine(),
+          StackTraceSpan(record.stackTrace!),
+          NewLine(),
+        ],
+      ]);
 
     // Data
     if (record.data.isNotEmpty) {

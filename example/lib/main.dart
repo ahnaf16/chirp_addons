@@ -43,10 +43,16 @@ class _ChirpAddonsExampleAppState extends State<ChirpAddonsExampleApp> {
       debugShowCheckedModeBanner: false,
       title: 'chirp_addons Example',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0E7490), brightness: Brightness.light),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0E7490),
+          brightness: Brightness.light,
+        ),
         scaffoldBackgroundColor: const Color(0xFFF6F7F4),
         useMaterial3: true,
-        cardTheme: const CardThemeData(margin: EdgeInsets.zero, color: Colors.white),
+        cardTheme: const CardThemeData(
+          margin: EdgeInsets.zero,
+          color: Colors.white,
+        ),
       ),
       home: ExampleHomePage(controller: _controller),
     );
